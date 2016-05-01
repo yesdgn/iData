@@ -9,6 +9,7 @@ var RouterApiTable = {};
 var ApiTableIsLoadData=0;
 var hasParam=true;
 var ParamErrStr='';
+
 exports.execApi = function(req, res) {
   //console.log('进入execApi');
   if (ApiTableIsLoadData===0) {
@@ -120,13 +121,41 @@ function execSql(req, res) {
           var item={};
           item['item'+i]=results[i];
           resultsJsonObject.items.push(item);
-
           }
+        return resultsJsonObject;
+      }
+    else if (_routerApiTable.TransformJsonType=='TREE')  // 返回树对象
+      {
+        var treeJson={};
+        buildTreeJson(results[0],0,treeJson);
+        resultsJsonObject.items=treeJson.children ||  treeJson ;
         return resultsJsonObject;
       }
     else
       {return results;}
   }
+
+  function buildTreeJson(results,rootvalue,parentObject) {
+     //var deleteIndex=[];
+     var childItem=results.filter((x,index) => {
+           if (x.PMenuID==rootvalue)
+           { //deleteIndex.push(index);
+             return true; }
+           else {return false;}
+        })
+     if (childItem.length>0)
+       { parentObject['children']=childItem;
+        // for (var j=0;j<deleteIndex.length;j++)
+        // {
+        //   console.log(results[deleteIndex[j]])
+        //   results.splice(deleteIndex[j],1);}
+     }
+
+     for (y in childItem)
+       { buildTreeJson(results,childItem[y].MenuID,parentObject.children[y]);}
+     return ;
+  }
+
   function exec()
   {//console.log('进入exec');
     hasParam=true;
