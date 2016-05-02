@@ -136,19 +136,11 @@ function execSql(req, res) {
   }
 
   function buildTreeJson(results,rootvalue,parentObject) {
-     //var deleteIndex=[];
      var childItem=results.filter((x,index) => {
-           if (x.PMenuID==rootvalue)
-           { //deleteIndex.push(index);
-             return true; }
-           else {return false;}
+          return (x.PMenuID==rootvalue)
         })
      if (childItem.length>0)
        { parentObject['children']=childItem;
-        // for (var j=0;j<deleteIndex.length;j++)
-        // {
-        //   console.log(results[deleteIndex[j]])
-        //   results.splice(deleteIndex[j],1);}
      }
 
      for (y in childItem)
