@@ -128,7 +128,7 @@ function execSql(req, res) {
       {
         var treeJson={};
         buildTreeJson(results[0],0,treeJson);
-        resultsJsonObject.items=treeJson.children ||  treeJson ;
+        resultsJsonObject.items=treeJson.children || [] ;
         return resultsJsonObject;
       }
     else
