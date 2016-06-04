@@ -1,2 +1,11 @@
 public/uploads/
 iData_Error.Log
+node_modules
+iData_out.log
+*~
+~*
+*.diff
+*.patch
+*.bak
+Thumbs.db
+.svn/

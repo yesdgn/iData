@@ -4,6 +4,7 @@
 
 var sql = require('../lib/mysqldb');
 var dgn = require('../lib/dgn');
+var lodash =  require('lodash');
 var returnInfo = require('../lib/returnInfo');
 var RouterApiTable = {};
 var ApiTableIsLoadData=0;
@@ -190,6 +191,24 @@ function execSql(req, res) {
          {   res.send(returnInfo.api.e1003);
            return;
          }
+      var timestamp=param('timestamp',req);
+      if (timestamp===undefined )
+          {   res.send(returnInfo.api.e1006);
+            return;
+          }
+      else if((lodash.now()-timestamp)>(1000*60*5))  //5分钟有效期
+      {
+        res.send(returnInfo.api.e1006);
+         return;
+      }
+      else
+      {
+        if(!dgn.checkUrl(req.query ))
+          {
+          res.send(returnInfo.api.e1005);
+           return;
+          }
+      }
       var options = {
           sql : "select  AccessToken  from dgn_access_token where   AccessToken='"+s2+"'  and now()<=ExpireTime",
           handler : returnSessionkey,
