@@ -116,12 +116,12 @@ function execSql(req, res) {
         return resultsJsonObject;
       }
     else if  (_routerApiTable.TransformJsonType=='PROC_M') // 有多个查询返回对象
-      {  resultsJsonObject.items=[];
+      {  resultsJsonObject.items={};
         for(var i=0;i<results.length-1;i++)
           {
-          var item={};
-          item['item'+i]=results[i];
-          resultsJsonObject.items.push(item);
+          //var item={};
+          //item['item'+i]=results[i];
+          resultsJsonObject.items['item'+i]=results[i];
           }
         return resultsJsonObject;
       }
