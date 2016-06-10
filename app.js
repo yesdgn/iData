@@ -12,6 +12,7 @@ var api = require('./routes/api');
 var returnInfo = require("./lib/returnInfo");
 
 var app = express();
+var upload=require('./lib/upload');
 
 // view engine setup
 //app.set('views', path.join(__dirname, 'views'));
@@ -36,11 +37,19 @@ app.all('*', function(req, res, next) {
     next();
 });
 
+app.options('/upload/*', function(req, res) {
+    res.end();
+});
+
 //app.use('/', routes);
 //app.use('/users', users);
 
 // api.initApiTable(null,null,false);
 app.all('/api/*', api.execApi);
+
+
+ app.post('/upload/img',upload.uploadImg);
+ app.post('/upload/file',upload.uploadFile);
 
 //所有未设置的路由全部重定向到首页
 app.use(function(req, res, next) {

@@ -1,0 +1,15 @@
+E:\DGN\project\iData\lib\multerUtil.js:22
+     eles
+     ^
+
+ReferenceError: eles is not defined
+    at multer.fileFilter (E:\DGN\project\iData\lib\multerUtil.js:22:6)
+    at wrappedFileFilter (E:\DGN\project\iData\node_modules\multer\index.js:43:7)
+    at Busboy.<anonymous> (E:\DGN\project\iData\node_modules\multer\lib\make-middleware.js:112:7)
+    at emitMany (events.js:108:13)
+    at Busboy.emit (events.js:182:7)
+    at Busboy.emit (E:\DGN\project\iData\node_modules\busboy\lib\main.js:31:35)
+    at PartStream.<anonymous> (E:\DGN\project\iData\node_modules\busboy\lib\types\multipart.js:213:13)
+    at emitOne (events.js:77:13)
+    at PartStream.emit (events.js:169:7)
+    at HeaderParser.<anonymous> (E:\DGN\project\iData\node_modules\dicer\lib\Dicer.js:51:16)

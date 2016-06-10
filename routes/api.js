@@ -69,30 +69,23 @@ function param(name, req,defaultValue) {
   };
 
 function execSql(req, res) {
-  //console.log('进入execSql');
   var _routerApiTable;
   function retrunJson(error,results) {
-    //console.log('进入retrunJson');
     if (error)
     {
       res.send(results);
       return;
     }
-    // console.log(JSON.stringify(results));
-    // res.send(results);
-    // return;
     var resultsJson;
-    resultsJson=transformJson(results);
+    resultsJson=dgn.transformJson(_routerApiTable.TransformJsonType,results);
     res.send(resultsJson);
   };
   function returnSessionkey(error,results) {
-    //console.log('进入returnSessionkey');
     if (error)
     {
       res.send(results);
       return;
     }
-    // console.log(JSON.stringify(results));
     var sessionkeyP=param('sessionkey',req);
     if (results.length>0 && results[0].AccessToken== sessionkeyP)
     {exec();}
@@ -102,55 +95,9 @@ function execSql(req, res) {
        return;
       }
   };
-  function transformJson(results)
-  {
-     var resultsJsonObject={"returnCode":0};
-    if (_routerApiTable.TransformJsonType=='VIEW')
-      {
-        resultsJsonObject.items=results;
-        return resultsJsonObject;
-      }
-    else if (_routerApiTable.TransformJsonType=='PROC_S')  // 只有一个查询返回对象
-      {
-        resultsJsonObject.items=results[0];
-        return resultsJsonObject;
-      }
-    else if  (_routerApiTable.TransformJsonType=='PROC_M') // 有多个查询返回对象
-      {  resultsJsonObject.items={};
-        for(var i=0;i<results.length-1;i++)
-          {
-          //var item={};
-          //item['item'+i]=results[i];
-          resultsJsonObject.items['item'+i]=results[i];
-          }
-        return resultsJsonObject;
-      }
-    else if (_routerApiTable.TransformJsonType=='TREE')  // 返回树对象
-      {
-        var treeJson={};
-        buildTreeJson(results[0],0,treeJson);
-        resultsJsonObject.items=treeJson.children || [] ;
-        return resultsJsonObject;
-      }
-    else
-      {return results;}
-  }
-
-  function buildTreeJson(results,rootvalue,parentObject) {
-     var childItem=results.filter((x,index) => {
-          return (x.PMenuID==rootvalue)
-        })
-     if (childItem.length>0)
-       { parentObject['children']=childItem;
-     }
-
-     for (y in childItem)
-       { buildTreeJson(results,childItem[y].MenuID,parentObject.children[y]);}
-     return ;
-  }
 
   function exec()
-  {//console.log('进入exec');
+  {
     hasParam=true;
     ParamErrStr='';
     var sqlstr=_routerApiTable.ApiExecSql;
@@ -219,6 +166,4 @@ function execSql(req, res) {
   else
     {
     exec();};
-
-
 };
