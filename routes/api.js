@@ -150,7 +150,6 @@ function execSql(req, res) {
       }
       else
       {
-        console.log(req.method);
         if( (req.method=='GET' && !dgn.checkUrl(req.query))  ||   (req.method=='POST' && !dgn.checkUrl(req.body))  )
           {
           res.send(returnInfo.api.e1005);
