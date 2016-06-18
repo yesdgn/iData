@@ -8,8 +8,8 @@ var lodash =  require('lodash');
 var returnInfo = require('../lib/returnInfo');
 var RouterApiTable = {};
 var ApiTableIsLoadData=0;
-var hasParam=true;
-var ParamErrStr='';
+// var hasParam=true;
+// var ParamErrStr='';
 
 exports.execApi = function(req, res) {
   //console.log('进入execApi');
@@ -34,6 +34,7 @@ function initApiTable(req, res) {
     for ( var i = 0; i < results.length; i++) {
       RouterApiTable['/api/'+results[i].ApiID]=results[i];
     }
+  //  console.log(RouterApiTable);
     if (results.length>1) // 标记已加载ApiTable
       {
         ApiTableIsLoadData=1;
@@ -98,26 +99,28 @@ function execSql(req, res) {
 
   function exec()
   {
-    hasParam=true;
-    ParamErrStr='';
+    // hasParam=true;
+    // ParamErrStr='';
     var sqlstr=_routerApiTable.ApiExecSql;
-      sqlstr=sqlstr.replace(/\{\$req.(.*?)\}/gi, function(reqstr){
-                var s = reqstr.replace("{$req.","");
-                s =s.replace("}","");
-                var s1=param(s,req);
-                if (s1===undefined)
-                  {  hasParam=false;
-                    ParamErrStr=ParamErrStr+s+'/';
-                  }
-                return  s1;
-            });
-        if (hasParam===false)
-          { res.send({"returnCode":1001,"result":"fail","returnDescribe":"【"+ParamErrStr+"】参数未传入"});
-            return;
-          }
+      // sqlstr=sqlstr.replace(/\{\$req.(.*?)\}/gi, function(reqstr){
+      //           var s = reqstr.replace("{$req.","");
+      //           s =s.replace("}","");
+      //           var s1=param(s,req);
+      //           if (s1===undefined)
+      //             {  hasParam=false;
+      //               ParamErrStr=ParamErrStr+s+'/';
+      //             }
+      //           return  s1;
+      //       });
+        // if (hasParam===false)
+        //   { res.send({"returnCode":1001,"result":"fail","returnDescribe":"【"+ParamErrStr+"】参数未传入"});
+        //     return;
+        //   }
+
       var options = {
           sql : sqlstr,
           handler : retrunJson,
+          args: lodash.isEmpty(req.query)?req.body:req.query
         };
 
       sql.execQuery(options);
