@@ -12,7 +12,7 @@ var ApiTableIsLoadData=0;
 // var ParamErrStr='';
 
 exports.execApi = function(req, res) {
-  //console.log('进入execApi');
+   //console.log('进入execApi');
   if (ApiTableIsLoadData===0) {
     initApiTable(req, res);
   } else {
