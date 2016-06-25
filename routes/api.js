@@ -8,8 +8,6 @@ var lodash =  require('lodash');
 var returnInfo = require('../lib/returnInfo');
 var RouterApiTable = {};
 var ApiTableIsLoadData=0;
-// var hasParam=true;
-// var ParamErrStr='';
 
 exports.execApi = function(req, res) {
    //console.log('进入execApi');
@@ -47,7 +45,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouterStr,ApiExecSql,IsOpen,ApiID,TransformJsonType from dgn_router_api where IsCancel=0;",
+    sql : "select RouterStr,ApiExecSql,IsOpen,ApiID,TransformJsonType,IsAutoGenerateSql,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -96,34 +94,62 @@ function execSql(req, res) {
        return;
       }
   };
+  //替换生成的SQL语句中的"和\
+  function replacestr(str) {
+    if (dgn.ifNull(str))
+      return 'null';
+    var s= str.replace(/["\\]/gi, function (txt, key) {
+      if(key==0)
+      {return txt;}
+       return '\\'+txt;
+    })
+    console.log(s);
+    return '"'+s+'"';
+    }
+  function generateSqlStr(args,TableNameArr) {
+     var tablename=TableNameArr.split(",");
+     var jsonData=JSON.parse(args.jsonData);
+     var sql='';
+     var insertKeyValue=dgn.getRand();
+     tablename.map(function(x,index) {
+       if (jsonData[index]==undefined)
+       {return sql }
+       var key=jsonData[index].key;
+       var items=jsonData[index].items;
+       items.map(function(x1){
+         var field='';
+         for (var x2 in x1)
+         { if (x2!=key)
+           {field=field+ (field==''?'':',')+ x2+'='+replacestr(x1[x2]);}
+         }
+         if (dgn.ifNull(x1[key]))
+         {
+           sql=sql+' insert into '+x+' set '+field+','+key+'=insertKeyValue;';
+         }
+         else {
+           sql=sql+' update '+x+' set '+field+' where '+key+'="'+x1[key]+'";';
+         }
+       })
+     })
+    return sql
+  }
 
   function exec()
   {
-    // hasParam=true;
-    // ParamErrStr='';
     var sqlstr=_routerApiTable.ApiExecSql;
-      // sqlstr=sqlstr.replace(/\{\$req.(.*?)\}/gi, function(reqstr){
-      //           var s = reqstr.replace("{$req.","");
-      //           s =s.replace("}","");
-      //           var s1=param(s,req);
-      //           if (s1===undefined)
-      //             {  hasParam=false;
-      //               ParamErrStr=ParamErrStr+s+'/';
-      //             }
-      //           return  s1;
-      //       });
-        // if (hasParam===false)
-        //   { res.send({"returnCode":1001,"result":"fail","returnDescribe":"【"+ParamErrStr+"】参数未传入"});
-        //     return;
-        //   }
+    var args=lodash.isEmpty(req.query)?req.body:req.query;
 
-      var options = {
-          sql : sqlstr,
-          handler : retrunJson,
-          args: lodash.isEmpty(req.query)?req.body:req.query
-        };
+      if (_routerApiTable.IsAutoGenerateSql==1)
+      {var sqls=generateSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
+        args={sqlstr:sqls};
+      }
 
-      sql.execQuery(options);
+      var options  = {
+            sql : sqlstr,
+            handler : retrunJson,
+            args:args
+          };
+       sql.execQuery(options);
 
   };
 
