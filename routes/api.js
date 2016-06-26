@@ -103,34 +103,39 @@ function execSql(req, res) {
       {return txt;}
        return '\\'+txt;
     })
-    console.log(s);
     return '"'+s+'"';
     }
   function generateSqlStr(args,TableNameArr) {
      var tablename=TableNameArr.split(",");
      var jsonData=JSON.parse(args.jsonData);
      var sql='';
-     var insertKeyValue=dgn.getRand();
+     var abort=false;
      tablename.map(function(x,index) {
+       if (abort){  return;  }
        if (jsonData[index]==undefined)
        {return sql }
-       var key=jsonData[index].key;
-       var items=jsonData[index].items;
-       items.map(function(x1){
+       jsonData.map(function(x1){
+         if (abort){return;}
          var field='';
          for (var x2 in x1)
-         { if (x2!=key)
+         { if (x2!='ID')
            {field=field+ (field==''?'':',')+ x2+'='+replacestr(x1[x2]);}
          }
-         if (dgn.ifNull(x1[key]))
+         var dataID= x1.ID ;
+           // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
+         if (!(dataID===undefined) && isNaN(dataID))
+         {abort=true; return;}
+         if (dgn.ifNull(x1.ID))
          {
-           sql=sql+' insert into '+x+' set '+field+','+key+'=insertKeyValue;';
+           sql=sql+' insert into '+x+' set '+field+';';
          }
          else {
-           sql=sql+' update '+x+' set '+field+' where '+key+'="'+x1[key]+'";';
+           sql=sql+' update '+x+' set '+field+' where ID='+x1.ID+';';
          }
        })
      })
+   if (abort){return null }
+
     return sql
   }
 
@@ -141,6 +146,7 @@ function execSql(req, res) {
 
       if (_routerApiTable.IsAutoGenerateSql==1)
       {var sqls=generateSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
+        if (sqls===null){res.send(returnInfo.api.e1007); return;}
         args={sqlstr:sqls};
       }
 
@@ -149,6 +155,7 @@ function execSql(req, res) {
             handler : retrunJson,
             args:args
           };
+
        sql.execQuery(options);
 
   };
