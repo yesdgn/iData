@@ -45,7 +45,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouterStr,ApiExecSql,IsOpen,ApiID,TransformJsonType,IsAutoGenerateSql,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,IsOpen,ApiID,TransformJsonType,IsAutoGenerateSql,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -98,6 +98,7 @@ function execSql(req, res) {
   function replacestr(str) {
     if (dgn.ifNull(str))
       return 'null';
+    if (!lodash.isString(str)){return str;}
     var s= str.replace(/["\\]/gi, function (txt, key) {
       if(key==0)
       {return txt;}
@@ -147,7 +148,7 @@ function execSql(req, res) {
       if (_routerApiTable.IsAutoGenerateSql==1)
       {var sqls=generateSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
-        args={sqlstr:sqls};
+        args.sqlstr=sqls;
       }
 
       var options  = {
