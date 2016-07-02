@@ -78,6 +78,7 @@ function execSql(req, res) {
     var resultsJson;
     resultsJson=dgn.transformJson(_routerApiTable.TransformJsonType,results);
     res.send(resultsJson);
+    return;
   };
   function returnSessionkey(error,results) {
     if (error)
