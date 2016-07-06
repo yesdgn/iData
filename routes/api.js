@@ -3,6 +3,7 @@
  */
 
 var sql = require('../lib/mysqldb');
+var mssql = require('../lib/mysqlmsdb');
 var dgn = require('../lib/dgn');
 var lodash =  require('lodash');
 var returnInfo = require('../lib/returnInfo');
@@ -45,7 +46,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouteName,ApiExecSql,IsOpen,ApiID,TransformJsonType,IsAutoGenerateSql,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,IsOpen,ApiID,TransformJsonType,AutoGenerateSqlType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -107,7 +108,8 @@ function execSql(req, res) {
     })
     return '"'+s+'"';
     }
-  function generateSqlStr(args,TableNameArr) {
+
+  function generateSaveSqlStr(args,TableNameArr) {
      var tablename=TableNameArr.split(",");
      var jsonData=JSON.parse(args.jsonData);
      var sql='';
@@ -116,7 +118,7 @@ function execSql(req, res) {
        if (abort){  return;  }
        if (jsonData[index]==undefined)
        {return sql }
-       jsonData.map(function(x1){
+       jsonData[index].map(function(x1){
          if (abort){return;}
          var field='';
          for (var x2 in x1)
@@ -140,26 +142,63 @@ function execSql(req, res) {
 
     return sql
   }
+  function generateReadSqlStr(args,TableNameArr) {
+     var tablename=TableNameArr.split(",");
+     var jsonData=JSON.parse(args.jsonData);
+     var tablePrimaryKey;
+     var tablePrimaryKeyValue;
+     var sql='';
+     var abort=false;
+     tablename.map(function(x,index) {
+       if (abort){  return;  }
+       if (jsonData[index]==undefined)
+       {return sql }
+         var x1=jsonData[index]
+         tablePrimaryKey=lodash.chain(x1).keys().value()
+         tablePrimaryKeyValue=x1[tablePrimaryKey];
+         //主键值只能是数字 安全考虑
+         if (isNaN(tablePrimaryKeyValue))
+         {abort=true; return;}
+         if (!isNaN(tablePrimaryKey))   //主键名不能是数字
+         {abort=true; return;}
+         var regx=/^[a-zA-Z0-9_]+$/; 
+         if (!regx.test(tablePrimaryKey))
+         {abort=true; return;}
+
+         sql=sql+'select * from '+x+' where '+tablePrimaryKey+'="'+tablePrimaryKeyValue+'";'
+     })
+   if (abort){return null }
+    return sql
+  }
 
   function exec()
   {
     var sqlstr=_routerApiTable.ApiExecSql;
     var args=lodash.isEmpty(req.query)?req.body:req.query;
+    var options  = {
+          sql : sqlstr,
+          handler : retrunJson,
+          args:args
+        };
 
-      if (_routerApiTable.IsAutoGenerateSql==1)
-      {var sqls=generateSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
+      if (_routerApiTable.AutoGenerateSqlType=='6365687725642743812')   //保存
+      {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
-        args.sqlstr=sqls;
+        options.args.sqlstr=sqls;
+        mssql.execQuery(options);
+
       }
+      else if (_routerApiTable.AutoGenerateSqlType=='6365687725642743814')  //读取
+      {var sqls=generateReadSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
+        if (sqls===null){res.send(returnInfo.api.e1007); return;}
+        options.args.sqlstr=sqls;
+        mssql.execQuery(options);
 
-      var options  = {
-            sql : sqlstr,
-            handler : retrunJson,
-            args:args
-          };
+      }
+      else {
+          sql.execQuery(options);
 
-       sql.execQuery(options);
-
+      }
   };
 
    _routerApiTable=RouterApiTable[req.path];  // req.originalUrl req.baseUrl
