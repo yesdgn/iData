@@ -161,7 +161,7 @@ function execSql(req, res) {
          {abort=true; return;}
          if (!isNaN(tablePrimaryKey))   //主键名不能是数字
          {abort=true; return;}
-         var regx=/^[a-zA-Z0-9_]+$/; 
+         var regx=/^[a-zA-Z0-9_]+$/;
          if (!regx.test(tablePrimaryKey))
          {abort=true; return;}
 
@@ -181,23 +181,21 @@ function execSql(req, res) {
           args:args
         };
 
-      if (_routerApiTable.AutoGenerateSqlType=='6365687725642743812')   //保存
+      if (_routerApiTable.AutoGenerateSqlType=='GENSAVESQL')   //保存
       {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
         options.args.sqlstr=sqls;
         mssql.execQuery(options);
 
       }
-      else if (_routerApiTable.AutoGenerateSqlType=='6365687725642743814')  //读取
+      else if (_routerApiTable.AutoGenerateSqlType=='GENREADSQL')  //读取
       {var sqls=generateReadSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
         options.args.sqlstr=sqls;
         mssql.execQuery(options);
-
       }
       else {
           sql.execQuery(options);
-
       }
   };
 
