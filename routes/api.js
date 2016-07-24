@@ -46,7 +46,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouteName,ApiExecSql,IsOpen,ApiID,TransformJsonType,AutoGenerateSqlType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,IsOpen,ApiID,TransformJsonType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -96,18 +96,7 @@ function execSql(req, res) {
        return;
       }
   };
-  //替换生成的SQL语句中的"和\
-  function replacestr(str) {
-    if (dgn.ifNull(str))
-      return 'null';
-    if (!lodash.isString(str)){return str;}
-    var s= str.replace(/["\\]/gi, function (txt, key) {
-      if(key==0)
-      {return txt;}
-       return '\\'+txt;
-    })
-    return '"'+s+'"';
-    }
+
 
   function generateSaveSqlStr(args,TableNameArr) {
      var tablename=TableNameArr.split(",");
@@ -123,7 +112,7 @@ function execSql(req, res) {
          var field='';
          for (var x2 in x1)
          { if (x2!='ID')
-           {field=field+ (field==''?'':',')+ x2+'='+replacestr(x1[x2]);}
+           {field=field+ (field==''?'':',')+ x2+'='+dgn.replacestr(x1[x2]);}
          }
          var dataID= x1.ID ;
            // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
@@ -170,7 +159,22 @@ function execSql(req, res) {
    if (abort){return null }
     return sql
   }
-
+  function generateListSqlStr(args,sqlArrs) {
+     var sqlArray=sqlArrs.split(";");
+     var pageSize=args.pageSize?args.pageSize:10;
+     var curPage=args.curPage?args.curPage:1;
+     var sql='';
+     var abort=false;
+     sqlArray.map(function(x,index) {
+       if (lodash.trim(x)!=''){
+         if (abort){  return;  }
+           sql=sql+'select count(1) TotalCount from ('+x+') T ;' ;
+           sql=sql+'\n\r'+x +' limit '+(curPage-1)*pageSize+','+pageSize+';';
+       }
+     })
+   if (abort){return null }
+    return sql
+  }
   function exec()
   {
     var sqlstr=_routerApiTable.ApiExecSql;
@@ -181,17 +185,23 @@ function execSql(req, res) {
           args:args
         };
 
-      if (_routerApiTable.AutoGenerateSqlType=='GENSAVESQL')   //保存
+      if (_routerApiTable.TransformJsonType=='FORMITEMUPDATE')   //自动生成单据保存语句
       {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
         options.args.sqlstr=sqls;
         mssql.execQuery(options);
 
       }
-      else if (_routerApiTable.AutoGenerateSqlType=='GENREADSQL')  //读取
+      else if (_routerApiTable.TransformJsonType=='FORMITEMREAD')  //自动生成单据读取语句
       {var sqls=generateReadSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
         options.args.sqlstr=sqls;
+        mssql.execQuery(options);
+      }
+      else if (_routerApiTable.TransformJsonType=='FORMLIST')  //自动生成列表语句
+      {var sqls=generateListSqlStr(args,_routerApiTable.ApiExecSql);
+        if (sqls===null){res.send(returnInfo.api.e1007); return;}
+        options.sql=sqls;
         mssql.execQuery(options);
       }
       else {

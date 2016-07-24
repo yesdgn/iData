@@ -27,6 +27,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+// process.on('uncaughtException', function(err) {
+//     console.error('Error caught in uncaughtException event:', err);
+// });
+
 //设置跨域访问
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
