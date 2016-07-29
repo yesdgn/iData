@@ -4,7 +4,7 @@ var path = require('path');
 var logger = require('morgan');
 //var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
+var sql = require('./lib/mysqldb');
 //var routes = require('./routes/index');
 //var users = require('./routes/users');
 
@@ -26,10 +26,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-// process.on('uncaughtException', function(err) {
-//     console.error('Error caught in uncaughtException event:', err);
-// });
+function sqlExecCB(error,results) {
+  process.emit('exit',1);
+  return;
+  };
+process.on('uncaughtException', function(err) {
+    console.error('Error caught in uncaughtException event:', err);
+    var initOptions = {
+      sql : "insert into dgn_log set Module='NodeJsError',Operation='NodeJS发生错误',`Describe`={$req.errStack}" ,
+      handler : sqlExecCB,
+      arge:{errStack:err.stack}
+    };
+    sql.execQuery(initOptions);
+});
 
 //设置跨域访问
 app.all('*', function(req, res, next) {
