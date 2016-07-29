@@ -27,15 +27,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 function sqlExecCB(error,results) {
-  process.emit('exit',1);
+  process.exit();
   return;
   };
 process.on('uncaughtException', function(err) {
     console.error('Error caught in uncaughtException event:', err);
     var initOptions = {
-      sql : "insert into dgn_log set Module='NodeJsError',Operation='NodeJS发生错误',`Describe`={$req.errStack}" ,
+      sql : "insert into dgn_log set Module='NodeJsError',userid='0',Operation='NodeJS发生错误',`Describe`={$req.errStack}" ,
       handler : sqlExecCB,
-      arge:{errStack:err.stack}
+      args:{errStack:err.stack}
     };
     sql.execQuery(initOptions);
 });
