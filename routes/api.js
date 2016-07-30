@@ -104,10 +104,14 @@ function execSql(req, res) {
      var sql='';
      var abort=false;
      tablename.map(function(x,index) {
+       var tempArr=[];
        if (abort){  return;  }
        if (jsonData[index]==undefined)
        {return sql }
-       jsonData[index].map(function(x1){
+       else if (lodash.isArray(jsonData[index]))
+       {tempArr=jsonData[index];}
+       else {tempArr.push(jsonData[index]);}   //不是数组则认为是对象，转换为数组 方便统一处理
+       tempArr.map(function(x1){
          if (abort){return;}
          var field='';
          for (var x2 in x1)
