@@ -115,19 +115,22 @@ function execSql(req, res) {
          if (abort){return;}
          var field='';
          for (var x2 in x1)
-         { if (x2!='ID')
+         { if (x2!='ID' &&  x2!='DgnOperatorType')
            {field=field+ (field==''?'':',')+ x2+'='+dgn.replacestr(x1[x2]);}
          }
          var dataID= x1.ID ;
            // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
          if (!(dataID===undefined) && isNaN(dataID))
          {abort=true; return;}
-         if (dgn.ifNull(x1.ID))
+         if (dgn.ifNull(x1.ID) && x1.DgnOperatorType=='ADD' )
          {
            sql=sql+' insert into '+x+' set '+field+';';
          }
-         else {
+         else if (x1.ID && x1.DgnOperatorType=='UPDATE' ) {
            sql=sql+' update '+x+' set '+field+' where ID='+x1.ID+';';
+         }
+         else if (x1.ID && x1.DgnOperatorType=='DELETE' ) {
+           sql=sql+' delete from '+x+' where ID='+x1.ID+';';
          }
        })
      })
@@ -192,6 +195,7 @@ function execSql(req, res) {
       if (_routerApiTable.TransformJsonType=='FORMITEMUPDATE')   //自动生成单据保存语句
       {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
+        if (sqls===''){res.send(returnInfo.api.e1009); return;}
         options.args.sqlstr=sqls;
         mssql.execQuery(options);
 
