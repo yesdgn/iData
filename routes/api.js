@@ -132,6 +132,8 @@ function execSql(req, res) {
          else if (x1.ID && x1.DgnOperatorType=='DELETE' ) {
            sql=sql+' delete from '+x+' where ID='+x1.ID+';';
          }
+         else 
+         {abort=true;return null;}
        })
      })
    if (abort){return null }
