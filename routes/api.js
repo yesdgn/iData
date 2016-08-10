@@ -70,6 +70,7 @@ function param(name, req,defaultValue) {
 
 function execSql(req, res) {
   var _routerApiTable;
+  var args=lodash.isEmpty(req.query)?req.body:req.query;
   function retrunJson(error,results) {
     if (error)
     {
@@ -77,7 +78,7 @@ function execSql(req, res) {
       return;
     }
     var resultsJson;
-    resultsJson=dgn.transformJson(_routerApiTable.TransformJsonType,results);
+    resultsJson=dgn.transformJson(_routerApiTable.TransformJsonType,args.apiAction,results);
     res.send(resultsJson);
     return;
   };
@@ -166,6 +167,34 @@ function execSql(req, res) {
    if (abort){return null }
     return sql
   }
+    function generateDeleteSqlStr(args,TableNameArr) {
+     var tablename=TableNameArr.split(",");
+     var jsonData=JSON.parse(args.jsonData);
+     var tablePrimaryKey;
+     var tablePrimaryKeyValue;
+     var sql='';
+     var abort=false;
+     tablename.map(function(x,index) {
+       if (abort){  return;  }
+       if (jsonData[index]==undefined)
+       {return sql }
+         var x1=jsonData[index]
+         tablePrimaryKey=lodash.chain(x1).keys().value()
+         tablePrimaryKeyValue=x1[tablePrimaryKey];
+         //主键值只能是数字 安全考虑
+         if (isNaN(tablePrimaryKeyValue))
+         {abort=true; return;}
+         if (!isNaN(tablePrimaryKey))   //主键名不能是数字
+         {abort=true; return;}
+         var regx=/^[a-zA-Z0-9_]+$/;
+         if (!regx.test(tablePrimaryKey))
+         {abort=true; return;}
+
+         sql=sql+'delete from '+x+' where '+tablePrimaryKey+'="'+tablePrimaryKeyValue+'";'
+     })
+   if (abort){return null }
+    return sql
+  }
   function generateListSqlStr(args,sqlArrs) {
      var sqlArray=sqlArrs.split(";");
      var pageSize=args.pageSize?args.pageSize:10;
@@ -185,31 +214,35 @@ function execSql(req, res) {
   function exec()
   {
     var sqlstr=_routerApiTable.ApiExecSql;
-    var args=lodash.isEmpty(req.query)?req.body:req.query;
+    
     var options  = {
           sql : sqlstr,
           handler : retrunJson,
           args:args
         };
-
-      if (_routerApiTable.TransformJsonType=='FORMITEMUPDATE')   //自动生成单据保存语句
-      {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
-        if (sqls===null){res.send(returnInfo.api.e1007); return;}
-        if (sqls===''){res.send(returnInfo.api.e1009); return;}
-        options.args.sqlstr=sqls;
-        mssql.execQuery(options);
-
-      }
-      else if (_routerApiTable.TransformJsonType=='FORMITEMREAD')  //自动生成单据读取语句
+      if (_routerApiTable.TransformJsonType=='FORMLIST')  //自动生成列表语句
+        {var sqls=generateListSqlStr(args,_routerApiTable.ApiExecSql);
+          if (sqls===null){res.send(returnInfo.api.e1007); return;}
+          options.sql=sqls;
+          mssql.execQuery(options);
+        }
+      else if (_routerApiTable.TransformJsonType=='FORM' && args.apiAction && args.apiAction=='READ')   //自动生成单据读取语句
       {var sqls=generateReadSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
         options.args.sqlstr=sqls;
         mssql.execQuery(options);
       }
-      else if (_routerApiTable.TransformJsonType=='FORMLIST')  //自动生成列表语句
-      {var sqls=generateListSqlStr(args,_routerApiTable.ApiExecSql);
+      else if (_routerApiTable.TransformJsonType=='FORM' && args.apiAction && args.apiAction=='SAVE')   //自动生成单据保存语句
+      {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
-        options.sql=sqls;
+        if (sqls===''){res.send(returnInfo.api.e1009); return;}
+        options.args.sqlstr=sqls;
+        mssql.execQuery(options);
+      }
+      else if (_routerApiTable.TransformJsonType=='FORM' && args.apiAction && args.apiAction=='DELETE')   //自动生成单据删除语句
+      {var sqls=generateDeleteSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
+        if (sqls===null){res.send(returnInfo.api.e1007); return;}
+        options.args.sqlstr=sqls;
         mssql.execQuery(options);
       }
       else {
