@@ -63,7 +63,7 @@ app.all('/api/*', api.execApi);
 
  app.post('/upload/img',upload.uploadImg);
  app.post('/upload/file',upload.uploadFile);
-
+app.post('/upload/temp',upload.uploadTempFile);
 //所有未设置的路由全部重定向到首页
 app.use(function(req, res, next) {
   console.log('重定向到根目录');
