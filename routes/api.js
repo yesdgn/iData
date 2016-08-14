@@ -7,6 +7,7 @@ var mssql = require('../lib/mysqlmsdb');
 var dgn = require('../lib/dgn');
 var lodash =  require('lodash');
 var returnInfo = require('../lib/returnInfo');
+var excel = require('../lib/excel');
 var RouterApiTable = {};
 var ApiTableIsLoadData=0;
 
@@ -46,7 +47,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouteName,ApiExecSql,IsOpen,ApiID,TransformJsonType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,ApiExportSql,IsOpen,ApiID,TransformJsonType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -79,7 +80,12 @@ function execSql(req, res) {
     }
     var resultsJson;
     resultsJson=dgn.transformJson(_routerApiTable.TransformJsonType,args.apiAction,results);
-    res.send(resultsJson);
+    if (_routerApiTable.TransformJsonType=='FORMLIST' && args.apiAction=='EXPORT')
+    {
+      excel.exportExcel(req,res,args,resultsJson);
+    }
+    else
+    {res.send(resultsJson);}
     return;
   };
   function returnSessionkey(error,results) {
@@ -211,6 +217,19 @@ function execSql(req, res) {
    if (abort){return null }
     return sql
   }
+    function generateListExportSqlStr(args,sqlArrs) {
+     var sqlArray=sqlArrs.split(";");
+     var sql='';
+     var abort=false;
+     sqlArray.map(function(x,index) {
+       if (lodash.trim(x)!=''){
+         if (abort){  return;  }
+           sql=sql+'\n\r'+x  +';';
+       }
+     })
+   if (abort){return null }
+    return sql
+  }
   function exec()
   {
     var sqlstr=_routerApiTable.ApiExecSql;
@@ -220,8 +239,14 @@ function execSql(req, res) {
           handler : retrunJson,
           args:args
         };
-      if (_routerApiTable.TransformJsonType=='FORMLIST')  //自动生成列表语句
+      if (_routerApiTable.TransformJsonType=='FORMLIST' && args.apiAction && args.apiAction=='READ')  //自动生成列表读语句
         {var sqls=generateListSqlStr(args,_routerApiTable.ApiExecSql);
+          if (sqls===null){res.send(returnInfo.api.e1007); return;}
+          options.sql=sqls;
+          mssql.execQuery(options);
+        }
+      else if (_routerApiTable.TransformJsonType=='FORMLIST' && args.apiAction && args.apiAction=='EXPORT')  //自动生成列表导出语句
+        {var sqls=generateListExportSqlStr(args,_routerApiTable.ApiExportSql);
           if (sqls===null){res.send(returnInfo.api.e1007); return;}
           options.sql=sqls;
           mssql.execQuery(options);
