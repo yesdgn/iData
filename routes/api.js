@@ -123,7 +123,7 @@ function execSql(req, res) {
          var field='';
          for (var x2 in x1)
          { if (x2!='ID' &&  x2!='DgnOperatorType')
-           {field=field+ (field==''?'':',')+ x2+'='+dgn.replacestr(x1[x2]);}
+           {field=field+ (field==''?'`':',`')+ x2+'`='+dgn.replacestr(x1[x2]);}
          }
          var dataID= x1.ID ;
            // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
@@ -168,7 +168,7 @@ function execSql(req, res) {
          if (!regx.test(tablePrimaryKey))
          {abort=true; return;}
 
-         sql=sql+'select * from '+x+' where '+tablePrimaryKey+'="'+tablePrimaryKeyValue+'";'
+         sql=sql+'select * from '+x+' where `'+tablePrimaryKey+'`="'+tablePrimaryKeyValue+'";'
      })
    if (abort){return null }
     return sql
@@ -196,7 +196,7 @@ function execSql(req, res) {
          if (!regx.test(tablePrimaryKey))
          {abort=true; return;}
 
-         sql=sql+'delete from '+x+' where '+tablePrimaryKey+'="'+tablePrimaryKeyValue+'";'
+         sql=sql+'delete from '+x+' where `'+tablePrimaryKey+'`="'+tablePrimaryKeyValue+'";'
      })
    if (abort){return null }
     return sql
