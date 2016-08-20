@@ -47,7 +47,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouteName,ApiExecSql,ApiExportSql,IsOpen,ApiID,TransformJsonType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,ApiExecConditionSql,IsOpen,ApiID,ApiType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -79,8 +79,8 @@ function execSql(req, res) {
       return;
     }
     var resultsJson;
-    resultsJson=dgn.transformJson(_routerApiTable.TransformJsonType,results,args.apiAction);
-    if (_routerApiTable.TransformJsonType=='FORMLIST' && args.apiAction=='EXPORT')
+    resultsJson=dgn.transformJson(_routerApiTable.ApiType,results);
+    if (_routerApiTable.ApiType=='FORM_LIST_EXPORT' )
     {
       excel.exportExcel(req,res,args,resultsJson);
     }
@@ -145,62 +145,62 @@ function execSql(req, res) {
 
     return sql
   }
-  function generateReadSqlStr(args,TableNameArr) {
-     var tablename=TableNameArr.split(",");
-     var jsonData=JSON.parse(args.jsonData);
-     var tablePrimaryKey;
-     var tablePrimaryKeyValue;
-     var sql='';
-     var abort=false;
-     tablename.map(function(x,index) {
-       if (abort){  return;  }
-       if (jsonData[index]==undefined)
-       {return sql }
-         var x1=jsonData[index]
-         tablePrimaryKey=lodash.chain(x1).keys().value()
-         tablePrimaryKeyValue=x1[tablePrimaryKey];
-         //主键值只能是数字 安全考虑
-         if (isNaN(tablePrimaryKeyValue))
-         {abort=true; return;}
-         if (!isNaN(tablePrimaryKey))   //主键名不能是数字
-         {abort=true; return;}
-         var regx=/^[a-zA-Z0-9_]+$/;
-         if (!regx.test(tablePrimaryKey))
-         {abort=true; return;}
+  // function generateReadSqlStr(args,TableNameArr) {
+  //    var tablename=TableNameArr.split(",");
+  //    var jsonData=JSON.parse(args.jsonData);
+  //    var tablePrimaryKey;
+  //    var tablePrimaryKeyValue;
+  //    var sql='';
+  //    var abort=false;
+  //    tablename.map(function(x,index) {
+  //      if (abort){  return;  }
+  //      if (jsonData[index]==undefined)
+  //      {return sql }
+  //        var x1=jsonData[index]
+  //        tablePrimaryKey=lodash.chain(x1).keys().value()
+  //        tablePrimaryKeyValue=x1[tablePrimaryKey];
+  //        //主键值只能是数字 安全考虑
+  //        if (isNaN(tablePrimaryKeyValue))
+  //        {abort=true; return;}
+  //        if (!isNaN(tablePrimaryKey))   //主键名不能是数字
+  //        {abort=true; return;}
+  //        var regx=/^[a-zA-Z0-9_]+$/;
+  //        if (!regx.test(tablePrimaryKey))
+  //        {abort=true; return;}
 
-         sql=sql+'select * from '+x+' where `'+tablePrimaryKey+'`="'+tablePrimaryKeyValue+'";'
-     })
-   if (abort){return null }
-    return sql
-  }
-    function generateDeleteSqlStr(args,TableNameArr) {
-     var tablename=TableNameArr.split(",");
-     var jsonData=JSON.parse(args.jsonData);
-     var tablePrimaryKey;
-     var tablePrimaryKeyValue;
-     var sql='';
-     var abort=false;
-     tablename.map(function(x,index) {
-       if (abort){  return;  }
-       if (jsonData[index]==undefined)
-       {return sql }
-         var x1=jsonData[index]
-         tablePrimaryKey=lodash.chain(x1).keys().value()
-         tablePrimaryKeyValue=x1[tablePrimaryKey];
-         //主键值只能是数字 安全考虑
-         if (isNaN(tablePrimaryKeyValue))
-         {abort=true; return;}
-         if (!isNaN(tablePrimaryKey))   //主键名不能是数字
-         {abort=true; return;}
-         var regx=/^[a-zA-Z0-9_]+$/;
-         if (!regx.test(tablePrimaryKey))
-         {abort=true; return;}
+  //        sql=sql+'select * from '+x+' where `'+tablePrimaryKey+'`="'+tablePrimaryKeyValue+'";'
+  //    })
+  //  if (abort){return null }
+  //   return sql
+  // }
+  //   function generateDeleteSqlStr(args,TableNameArr) {
+  //    var tablename=TableNameArr.split(",");
+  //    var jsonData=JSON.parse(args.jsonData);
+  //    var tablePrimaryKey;
+  //    var tablePrimaryKeyValue;
+  //    var sql='';
+  //    var abort=false;
+  //    tablename.map(function(x,index) {
+  //      if (abort){  return;  }
+  //      if (jsonData[index]==undefined)
+  //      {return sql }
+  //        var x1=jsonData[index]
+  //        tablePrimaryKey=lodash.chain(x1).keys().value()
+  //        tablePrimaryKeyValue=x1[tablePrimaryKey];
+  //        //主键值只能是数字 安全考虑
+  //        if (isNaN(tablePrimaryKeyValue))
+  //        {abort=true; return;}
+  //        if (!isNaN(tablePrimaryKey))   //主键名不能是数字
+  //        {abort=true; return;}
+  //        var regx=/^[a-zA-Z0-9_]+$/;
+  //        if (!regx.test(tablePrimaryKey))
+  //        {abort=true; return;}
 
-         sql=sql+'delete from '+x+' where `'+tablePrimaryKey+'`="'+tablePrimaryKeyValue+'";'
-     })
-   if (abort){return null }
-    return sql
-  }
+  //        sql=sql+'delete from '+x+' where `'+tablePrimaryKey+'`="'+tablePrimaryKeyValue+'";'
+  //    })
+  //  if (abort){return null }
+  //   return sql
+  // }
   function generateListSqlStr(args,sqlArrs) {
      var sqlArray=sqlArrs.split(";");
      var pageSize=args.pageSize?args.pageSize:10;
@@ -217,62 +217,98 @@ function execSql(req, res) {
    if (abort){return null }
     return sql
   }
-    function generateListExportSqlStr(args,sqlArrs) {
-     var sqlArray=sqlArrs.split(";");
-     var sql='';
-     var abort=false;
-     sqlArray.map(function(x,index) {
-       if (lodash.trim(x)!=''){
-         if (abort){  return;  }
-           sql=sql+'\n\r'+x  +';';
-       }
-     })
-   if (abort){return null }
-    return sql
-  }
-  function exec()
-  {
+  //   function generateListExportSqlStr(args,sqlArrs) {
+  //    var sqlArray=sqlArrs.split(";");
+  //    var sql='';
+  //    var abort=false;
+  //    sqlArray.map(function(x,index) {
+  //      if (lodash.trim(x)!=''){
+  //        if (abort){  return;  }
+  //          sql=sql+'\n\r'+x  +';';
+  //      }
+  //    })
+  //  if (abort){return null }
+  //   return sql
+  // }
+ function ConditionSqlResult(error,results) {
+    if (error)
+    {
+      res.send(results);
+      return;
+    }
+ 
+    if (results.length==0)
+    {
+      exec1();
+    }
+    else
+    {
+      res.send({"returnCode":-1,"returnDescribe":results[0].ErrorMessage ,items:[{"result":"fail","resultDescribe":results[0].ErrorMessage}]});
+    }
+ 
+    return;
+  };
+  function  exec1() {  
     var sqlstr=_routerApiTable.ApiExecSql;
-    
     var options  = {
           sql : sqlstr,
           handler : retrunJson,
           args:args
         };
-      if (_routerApiTable.TransformJsonType=='FORMLIST' && args.apiAction && args.apiAction=='READ')  //自动生成列表读语句
+      if (_routerApiTable.ApiType=='FORM_LIST_READ'  )   //列表读语句
         {var sqls=generateListSqlStr(args,_routerApiTable.ApiExecSql);
           if (sqls===null){res.send(returnInfo.api.e1007); return;}
           options.sql=sqls;
           mssql.execQuery(options);
         }
-      else if (_routerApiTable.TransformJsonType=='FORMLIST' && args.apiAction && args.apiAction=='EXPORT')  //自动生成列表导出语句
-        {var sqls=generateListExportSqlStr(args,_routerApiTable.ApiExportSql);
-          if (sqls===null){res.send(returnInfo.api.e1007); return;}
-          options.sql=sqls;
-          mssql.execQuery(options);
-        }
-      else if (_routerApiTable.TransformJsonType=='FORM' && args.apiAction && args.apiAction=='READ')   //自动生成单据读取语句
-      {var sqls=generateReadSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
-        if (sqls===null){res.send(returnInfo.api.e1007); return;}
-        options.args.sqlstr=sqls;
+      // else if (_routerApiTable.ApiType=='FORM_LIST_EXPORT' )  // 列表导出语句
+      //   {var sqls=generateListExportSqlStr(args,_routerApiTable.ApiExecSql);
+      //     if (sqls===null){res.send(returnInfo.api.e1007); return;}
+      //     options.sql=sqls;
+      //     mssql.execQuery(options);
+      //   }
+      else if (_routerApiTable.ApiType=='FORM_READ' || _routerApiTable.ApiType=='FORM_LIST_EXPORT' || _routerApiTable.ApiType=='FORM_DELETE' )   // 单据读取语句
+      {//var sqls=generateReadSqlStr(args,_routerApiTable.ApiExecSql);
+       // if (sqls===null){res.send(returnInfo.api.e1007); return;}
+       // options.args.sqlstr=sqls;
         mssql.execQuery(options);
       }
-      else if (_routerApiTable.TransformJsonType=='FORM' && args.apiAction && args.apiAction=='SAVE')   //自动生成单据保存语句
+      else if (_routerApiTable.ApiType=='FORM_SAVE'  )   //自动生成单据保存语句
       {var sqls=generateSaveSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
         if (sqls===null){res.send(returnInfo.api.e1007); return;}
         if (sqls===''){res.send(returnInfo.api.e1009); return;}
         options.args.sqlstr=sqls;
         mssql.execQuery(options);
       }
-      else if (_routerApiTable.TransformJsonType=='FORM' && args.apiAction && args.apiAction=='DELETE')   //自动生成单据删除语句
-      {var sqls=generateDeleteSqlStr(args,_routerApiTable.AutoGenerateSqlTableName);
-        if (sqls===null){res.send(returnInfo.api.e1007); return;}
-        options.args.sqlstr=sqls;
-        mssql.execQuery(options);
-      }
+      // else if (_routerApiTable.ApiType=='FORM_DELETE' )   // 单据删除语句
+      // {var sqls=generateDeleteSqlStr(args,_routerApiTable.ApiExecSql);
+      //   if (sqls===null){res.send(returnInfo.api.e1007); return;}
+      //   options.args.sqlstr=sqls;
+      //   mssql.execQuery(options);
+      // }
       else {
           sql.execQuery(options);
       }
+  }
+  function exec()
+  {
+    var sqlstr=_routerApiTable.ApiExecSql;
+    var ConditionSql=lodash.trim(_routerApiTable.ApiExecConditionSql);
+    //执行API的SQL之前做下逻辑判断 不符合条件将不执行SQL语句
+    if (ConditionSql && ConditionSql!='')
+    {
+          var conditionSqlOptions  = {
+          sql : ConditionSql,
+          handler : ConditionSqlResult,
+          args:args
+        };
+         mssql.execQuery(conditionSqlOptions);
+    }
+    else
+    {
+      exec1();
+    }
+    return;
   };
 
    _routerApiTable=RouterApiTable[req.path];  // req.originalUrl req.baseUrl
