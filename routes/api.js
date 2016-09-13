@@ -294,6 +294,19 @@ function execSql(req, res) {
   {
     var sqlstr=_routerApiTable.ApiExecSql;
     var ConditionSql=lodash.trim(_routerApiTable.ApiExecConditionSql);
+    if (_routerApiTable.IsOpen=='0' ) 
+    {
+      var apiRightSql=' select \'您没有权限执行此操作\'  as ErrorMessage from dgn_router_api m where IsCancel=0  and apiid= '+_routerApiTable.ApiID+' and  not exists		 (select 1 from dgn_role_user a	 inner join dgn_role_rights b on a.RoleID=b.RoleID	  where a.UserID='+args.userid+' and 	b.dataid=m.RouteID )';
+       if (ConditionSql && ConditionSql!='')
+       {
+         ConditionSql=apiRightSql+' union all '+ConditionSql;
+       }
+       else
+       {
+         ConditionSql=apiRightSql;
+       }
+    }
+
     //执行API的SQL之前做下逻辑判断 不符合条件将不执行SQL语句
     if (ConditionSql && ConditionSql!='')
     {
