@@ -47,7 +47,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouteName,ApiExecSql,ApiExecConditionSql,IsOpen,ApiID,ApiType,AutoGenerateSqlTableName from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,ApiExecConditionSql,IsOpen,ApiID,ApiType,AutoGenerateSqlTableName,IsAllowRoleRight from dgn_router_api where IsCancel=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -294,9 +294,10 @@ function execSql(req, res) {
   {
     var sqlstr=_routerApiTable.ApiExecSql;
     var ConditionSql=lodash.trim(_routerApiTable.ApiExecConditionSql);
-    if (_routerApiTable.IsOpen=='0' ) 
+    //非开放API和受控于角色权限的API需要判断权限
+    if (_routerApiTable.IsOpen==0 && _routerApiTable.IsAllowRoleRight==1 ) 
     {
-      var apiRightSql=' select \'您没有权限执行此操作\'  as ErrorMessage from dgn_router_api m where IsCancel=0  and apiid= '+_routerApiTable.ApiID+' and  not exists		 (select 1 from dgn_role_user a	 inner join dgn_role_rights b on a.RoleID=b.RoleID	  where a.UserID='+args.userid+' and 	b.dataid=m.RouteID )';
+      let apiRightSql=' select \'您没有权限执行此操作\'  as ErrorMessage from dgn_router_api m where IsCancel=0  and apiid= '+_routerApiTable.ApiID+' and  not exists		 (select 1 from dgn_role_user a	 inner join dgn_role_rights b on a.RoleID=b.RoleID	  where a.UserID='+args.userid+' and 	b.dataid=m.RouteID )';
        if (ConditionSql && ConditionSql!='')
        {
          ConditionSql=apiRightSql+' union all '+ConditionSql;
