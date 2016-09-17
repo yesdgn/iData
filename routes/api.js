@@ -205,13 +205,15 @@ function execSql(req, res) {
      var sqlArray=sqlArrs.split(";");
      var pageSize=args.pageSize?args.pageSize:10;
      var curPage=args.curPage?args.curPage:1;
+     let filter=args.dgnFilter?JSON.parse(args.dgnFilter):'';
      var sql='';
      var abort=false;
      sqlArray.map(function(x,index) {
        if (lodash.trim(x)!=''){
          if (abort){  return;  }
-           sql=sql+'select count(1) TotalCount from ('+x+') T ;' ;
-           sql=sql+'\n\r'+x +' limit '+(curPage-1)*pageSize+','+pageSize+';';
+          let tmpsql= dgn.queryFormat(x,filter);
+           sql=sql+'select count(1) TotalCount from ('+tmpsql +') T ;' ;
+           sql=sql+'\n\r'+tmpsql  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
        }
      })
    if (abort){return null }
