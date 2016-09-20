@@ -123,7 +123,10 @@ function execSql(req, res) {
          var field='';
          for (var x2 in x1)
          { if (x2!='ID' &&  x2!='DgnOperatorType')
-           {field=field+ (field==''?'`':',`')+ x2+'`='+dgn.replacestr(x1[x2]);}
+           {
+             let tmpfield=dgn.replacestr(x1[x2]);
+             tmpfield= tmpfield===''?null:'"'+tmpfield+'"' ;
+             field=field+ (field==''?'`':',`')+ x2+'`='+tmpfield;}
          }
          var dataID= x1.ID ;
            // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
@@ -205,15 +208,17 @@ function execSql(req, res) {
      var sqlArray=sqlArrs.split(";");
      var pageSize=args.pageSize?args.pageSize:10;
      var curPage=args.curPage?args.curPage:1;
-     let filter=args.dgnFilter?JSON.parse(args.dgnFilter):'';
+     //let filter=args.dgnFilter?JSON.parse(args.dgnFilter):{};
      var sql='';
      var abort=false;
      sqlArray.map(function(x,index) {
        if (lodash.trim(x)!=''){
          if (abort){  return;  }
-          let tmpsql= dgn.queryFormat(x,filter);
-           sql=sql+'select count(1) TotalCount from ('+tmpsql +') T ;' ;
-           sql=sql+'\n\r'+tmpsql  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
+       //  console.log(filter);
+       //    let tmpsql  =x.replace(/\{\$req.dgnFilter\}/gi, lodash.isEmpty(filter)?'':'1');  //将req.dgnFilter重置，没有过滤条件则为空 有过滤则为1
+       //      tmpsql= dgn.queryFormat(tmpsql,filter);  
+           sql=sql+'select count(1) TotalCount from ('+x +') T ;' ;
+           sql=sql+'\n\r'+x  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
        }
      })
    if (abort){return null }
