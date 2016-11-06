@@ -130,7 +130,7 @@ function execSql(req, res) {
          }
          var dataID= x1.ID ;
            // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
-         if (!(dataID===undefined) && isNaN(dataID))
+         if ( isNaN(dataID) && dataID!==undefined)
          {abort=true; return;}
          if (dgn.ifNull(x1.ID) && x1.DgnOperatorType=='ADD' )
          {
@@ -142,6 +142,8 @@ function execSql(req, res) {
          else if (x1.ID && x1.DgnOperatorType=='DELETE' ) {
            sql=sql+' delete from '+x+' where ID='+x1.ID+';';
          }
+         else
+         {return;}
        })
      })
    if (abort){return null }
