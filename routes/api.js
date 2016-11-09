@@ -105,42 +105,46 @@ function execSql(req, res) {
   };
 
 
-  function generateSaveSqlStr(args,TableNameArr) {
-     var tablename=TableNameArr.split(",");
+  function generateSaveSqlStr(args,tableNameStr) {
+     var tablenameArr=tableNameStr.split(",");
      var jsonData=JSON.parse(args.jsonData);
      var sql='';
      var abort=false;
-     tablename.map(function(x,index) {
-       var tempArr=[];
+     tablenameArr.map(function(tablename,tableIndex) {
+       var jsonTableData=[];
        if (abort){  return;  }
-       if (jsonData[index]==undefined)
+       if (jsonData[tableIndex]==undefined)
        {return sql }
-       else if (lodash.isArray(jsonData[index]))
-       {tempArr=jsonData[index];}
-       else {tempArr.push(jsonData[index]);}   //不是数组则认为是对象，转换为数组 方便统一处理
-       tempArr.map(function(x1){
+       else if (lodash.isArray(jsonData[tableIndex]))
+       {jsonTableData=jsonData[tableIndex];}
+       else {jsonTableData.push(jsonData[tableIndex]);}   //不是数组则认为是对象，转换为数组 方便统一处理
+       jsonTableData.map(function(row){
          if (abort){return;}
          var field='';
-         for (var x2 in x1)
-         { if (x2!='ID' &&  x2!='DgnOperatorType')
+         for (var col in row)
+         { if (col!='ID' &&  col!='DgnOperatorType')
            {
-             let tmpfield=dgn.replacestr(x1[x2]);
-             tmpfield= tmpfield===''?null:'"'+tmpfield+'"' ;
-             field=field+ (field==''?'`':',`')+ x2+'`='+tmpfield;}
+             let colvalue=dgn.replacestr(row[col]);
+             if (colvalue===true)
+              {colvalue=1;}
+             else if (colvalue===false)
+             {colvalue=0;}
+             colvalue= colvalue===''?null:'"'+colvalue+'"' ;
+             field=field+ (field==''?'`':',`')+ col+'`='+colvalue;}
          }
-         var dataID= x1.ID ;
+         var dataID= row.ID ;
            // 只允许数字与undefined(新增只能是undefined) 如果非数字有可能是SQL注入行为
          if ( isNaN(dataID) && dataID!==undefined)
          {abort=true; return;}
-         if (dgn.ifNull(x1.ID) && x1.DgnOperatorType=='ADD' )
+         if (dgn.ifNull(row.ID) && row.DgnOperatorType=='ADD' )
          {
-           sql=sql+' insert into '+x+' set '+field+';';
+           sql=sql+' insert into '+tablename+' set '+field+';';
          }
-         else if (x1.ID && x1.DgnOperatorType=='UPDATE' ) {
-           sql=sql+' update '+x+' set '+field+' where ID='+x1.ID+';';
+         else if (row.ID && row.DgnOperatorType=='UPDATE' ) {
+           sql=sql+' update '+tablename+' set '+field+' where ID='+row.ID+';';
          }
-         else if (x1.ID && x1.DgnOperatorType=='DELETE' ) {
-           sql=sql+' delete from '+x+' where ID='+x1.ID+';';
+         else if (row.ID && row.DgnOperatorType=='DELETE' ) {
+           sql=sql+' delete from '+tablename+' where ID='+row.ID+';';
          }
          else
          {return;}
@@ -213,14 +217,14 @@ function execSql(req, res) {
      //let filter=args.dgnFilter?JSON.parse(args.dgnFilter):{};
      var sql='';
      var abort=false;
-     sqlArray.map(function(x,index) {
-       if (lodash.trim(x)!=''){
+     sqlArray.map(function(sqlStr,index) {
+       if (lodash.trim(sqlStr)!=''){
          if (abort){  return;  }
        //  console.log(filter);
        //    let tmpsql  =x.replace(/\{\$req.dgnFilter\}/gi, lodash.isEmpty(filter)?'':'1');  //将req.dgnFilter重置，没有过滤条件则为空 有过滤则为1
        //      tmpsql= dgn.queryFormat(tmpsql,filter);  
-           sql=sql+'select count(1) TotalCount from ('+x +') T ;' ;
-           sql=sql+'\n\r'+x  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
+           sql=sql+'select count(1) TotalCount from ('+sqlStr +') T ;' ;
+           sql=sql+'\n\r'+sqlStr  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
        }
      })
    if (abort){return null }
@@ -248,7 +252,7 @@ function execSql(req, res) {
  
     if (results.length==0)
     {
-      exec1();
+      dbexec();
     }
     else
     {
@@ -257,7 +261,7 @@ function execSql(req, res) {
  
     return;
   };
-  function  exec1() {  
+  function  dbexec() {  
     var sqlstr=_routerApiTable.ApiExecSql;
     var options  = {
           sql : sqlstr,
@@ -329,11 +333,11 @@ function execSql(req, res) {
     }
     else
     {
-      exec1();
+      dbexec();
     }
     return;
   };
-
+//--------------------start--------------------------//
    _routerApiTable=RouterApiTable[req.path];  // req.originalUrl req.baseUrl
                         // req.path
   if (_routerApiTable===undefined) // 不存在的API
