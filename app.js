@@ -1,7 +1,9 @@
+var compression = require('compression');
 var express = require('express');
 var path = require('path');
 //var favicon = require('serve-favicon');
 var logger = require('morgan');
+
 //var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var sql = require('./lib/mysqldb');
@@ -24,12 +26,24 @@ app.use(logger('dev'));
 //app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 //app.use(cookieParser());
+app.use(compression({filter: shouldCompress}))
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 function sqlExecCB(error,results) {
   process.exit();
   return;
   };
+
+  function shouldCompress (req, res) {
+   if (req.headers['x-no-compression']) {
+     // don't compress responses with this request header
+     return false
+   }
+   // fallback to standard filter function
+   return compression.filter(req, res)
+  }
+
 process.on('uncaughtException', function(err) {
     console.error('Error caught in uncaughtException event:', err);
     var initOptions = {

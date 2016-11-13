@@ -47,7 +47,7 @@ function initApiTable(req, res) {
       }
     };
   var initOptions = {
-    sql : "select RouteName,ApiExecSql,ApiExecConditionSql,IsOpen,ApiID,ApiType,AutoGenerateSqlTableName,IsAllowRoleRight from dgn_router_api where IsCancel=0;",
+    sql : "select RouteName,ApiExecSql,ApiExecConditionSql,IsOpen,ApiID,ApiType,AutoGenerateSqlTableName,IsAllowRoleRight from dgn_router_api where IsValid=1 and IsDelete=0;",
     handler : router_api_cb
   };
   console.log('ApiTable初始化加载');
@@ -222,7 +222,7 @@ function execSql(req, res) {
          if (abort){  return;  }
        //  console.log(filter);
        //    let tmpsql  =x.replace(/\{\$req.dgnFilter\}/gi, lodash.isEmpty(filter)?'':'1');  //将req.dgnFilter重置，没有过滤条件则为空 有过滤则为1
-       //      tmpsql= dgn.queryFormat(tmpsql,filter);  
+       //      tmpsql= dgn.queryFormat(tmpsql,filter);
            sql=sql+'select count(1) TotalCount from ('+sqlStr +') T ;' ;
            sql=sql+'\n\r'+sqlStr  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
        }
@@ -249,7 +249,7 @@ function execSql(req, res) {
       res.send(results);
       return;
     }
- 
+
     if (results.length==0)
     {
       dbexec();
@@ -258,10 +258,10 @@ function execSql(req, res) {
     {
       res.send({"returnCode":-1,"returnDescribe":results[0].ErrorMessage ,items:[{"result":"fail","resultDescribe":results[0].ErrorMessage}]});
     }
- 
+
     return;
   };
-  function  dbexec() {  
+  function  dbexec() {
     var sqlstr=_routerApiTable.ApiExecSql;
     var options  = {
           sql : sqlstr,
@@ -308,7 +308,7 @@ function execSql(req, res) {
     var sqlstr=_routerApiTable.ApiExecSql;
     var ConditionSql=lodash.trim(_routerApiTable.ApiExecConditionSql);
     //非开放API和受控于角色权限的API需要判断权限
-    if (_routerApiTable.IsOpen==0 && _routerApiTable.IsAllowRoleRight==1 ) 
+    if (_routerApiTable.IsOpen==0 && _routerApiTable.IsAllowRoleRight==1 )
     {
       let apiRightSql=' select \'您没有权限执行此操作\'  as ErrorMessage from dgn_router_api m where IsCancel=0  and apiid= '+_routerApiTable.ApiID+' and  not exists		 (select 1 from dgn_role_user a	 inner join dgn_role_rights b on a.RoleID=b.RoleID	  where a.UserID='+args.userid+' and 	b.dataid=m.RouteID )';
        if (ConditionSql && ConditionSql!='')
