@@ -108,6 +108,7 @@ function execSql(req, res) {
   function generateSaveSqlStr(args,tableNameStr) {
      var tablenameArr=tableNameStr.split(",");
      var jsonData=JSON.parse(args.jsonData);
+     var excludeColNameArr=args.excludeColName.split(",");
      var sql='';
      var abort=false;
      tablenameArr.map(function(tablename,tableIndex) {
@@ -122,7 +123,7 @@ function execSql(req, res) {
          if (abort){return;}
          var field='';
          for (var col in row)
-         { if (col!='ID' &&  col!='DgnOperatorType')
+         { if (col!='ID' &&  col!='DgnOperatorType' && !excludeColNameArr.includes(col)   )
            {
              let colvalue=dgn.replacestr(row[col]);
              if (colvalue===true)
@@ -224,7 +225,8 @@ function execSql(req, res) {
        //    let tmpsql  =x.replace(/\{\$req.dgnFilter\}/gi, lodash.isEmpty(filter)?'':'1');  //将req.dgnFilter重置，没有过滤条件则为空 有过滤则为1
        //      tmpsql= dgn.queryFormat(tmpsql,filter);
            sql=sql+'select count(1) TotalCount from ('+sqlStr +') T ;' ;
-           sql=sql+'\n\r'+sqlStr  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
+           //sql=sql+'\n\r'+sqlStr  +' limit '+(curPage-1)*pageSize+','+pageSize+';';
+           sql=sql+'\n\r'+sqlStr  +' limit '+curPage+','+pageSize+';';
        }
      })
    if (abort){return null }
@@ -310,7 +312,7 @@ function execSql(req, res) {
     //非开放API和受控于角色权限的API需要判断权限
     if (_routerApiTable.IsOpen==0 && _routerApiTable.IsAllowRoleRight==1 )
     {
-      let apiRightSql=' select \'您没有权限执行此操作\'  as ErrorMessage from dgn_router_api m where IsCancel=0  and apiid= '+_routerApiTable.ApiID+' and  not exists		 (select 1 from dgn_role_user a	 inner join dgn_role_rights b on a.RoleID=b.RoleID	  where a.UserID='+args.userid+' and 	b.dataid=m.RouteID )';
+      let apiRightSql=' select \'您没有权限执行此操作\'  as ErrorMessage from dgn_router_api m where IsValid=0  and apiid= '+_routerApiTable.ApiID+' and  not exists		 (select 1 from dgn_role_user a	 inner join dgn_role_rights b on a.RoleID=b.RoleID	  where a.UserID='+args.userid+' and 	b.dataid=m.RouteID )';
        if (ConditionSql && ConditionSql!='')
        {
          ConditionSql=apiRightSql+' union all '+ConditionSql;
