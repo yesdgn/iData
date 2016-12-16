@@ -79,7 +79,7 @@ function execSql(req, res) {
       return;
     }
     var resultsJson;
-    resultsJson=dgn.transformJson(_routerApiTable.ApiType,results);
+    resultsJson=dgn.transformJson(_routerApiTable.ApiType,results,args);
     if (_routerApiTable.ApiType=='FORM_LIST_EXPORT' )
     {
       excel.exportExcel(req,res,args,resultsJson);
