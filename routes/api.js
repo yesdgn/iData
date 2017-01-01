@@ -108,7 +108,7 @@ function execSql(req, res) {
   function generateSaveSqlStr(args,tableNameStr) {
      var tablenameArr=tableNameStr.split(",");
      var jsonData=JSON.parse(args.jsonData);
-     var excludeColNameArr=args.excludeColName?args.excludeColName.split(","):[];
+     //var excludeColNameArr=args.excludeColName?args.excludeColName.split(","):[];
      var sql='';
      var abort=false;
      tablenameArr.map(function(tablename,tableIndex) {
@@ -123,7 +123,7 @@ function execSql(req, res) {
          if (abort){return;}
          var field='';
          for (var col in row)
-         { if (col!='ID' &&  col!='DgnOperatorType' && !excludeColNameArr.includes(col)   )
+         { if (col!='ID' &&  col!='DgnOperatorType'    )
            {
              let colvalue=dgn.replacestr(row[col]);
              if (colvalue===true)
