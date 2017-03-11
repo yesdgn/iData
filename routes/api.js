@@ -85,7 +85,7 @@ function execSql(req, res) {
       excel.exportExcel(req,res,args,resultsJson);
     }
     else
-    {res.send(resultsJson);}
+    {  res.send(resultsJson);}
     return;
   };
   function returnSessionkey(error,results) {
